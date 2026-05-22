@@ -16,6 +16,7 @@ import {
 } from "redux-persist";
 import storage from "redux-persist/es/storage";
 import authReducer from "./features/authSlice";
+import bookingHistoryReducer from "./features/bookingHistorySlice";
 import currentTravelBookingReducer from "./features/currentTravelBookingSlice";
 
 const persistedAuthReducer = persistReducer(
@@ -29,6 +30,7 @@ const persistedAuthReducer = persistReducer(
 export const store = configureStore({
     reducer: {
         auth: persistedAuthReducer,
+        bookingHistory: bookingHistoryReducer,
         currentTravelBooking: currentTravelBookingReducer,
     },
     middleware: (getDefaultMiddleware) =>

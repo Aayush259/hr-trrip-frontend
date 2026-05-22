@@ -1,4 +1,6 @@
+import { useSearchParams } from "react-router";
 import { resetCurrentTravelBooking } from "../app/features/currentTravelBookingSlice";
+import useBookingDetailsFromRoute from "../app/hooks/useBookingDetailsFromRoute";
 import { useAppDispatch, useAppSelector } from "../app/hooks/helperHooks";
 import TravelBookingErrorState from "../components/booking/TravelBookingErrorState";
 import TravelBookingLoading from "../components/booking/TravelBookingLoading";
@@ -8,13 +10,20 @@ import HomeFileUpload from "../components/upload/HomeFileUpload";
 
 const HomePage = () => {
     const dispatch = useAppDispatch();
+    const [, setSearchParams] = useSearchParams();
     const user = useAppSelector((state) => state.auth.user);
     const { booking, error, message, status } = useAppSelector(
         (state) => state.currentTravelBooking
     );
-    const isWaitingForBooking = ["uploading", "pending", "processing"].includes(status);
+    const isWaitingForBooking = ["loading", "uploading", "pending", "processing"].includes(
+        status
+    );
+
+    useBookingDetailsFromRoute();
+
     const handleUploadAnother = () => {
         dispatch(resetCurrentTravelBooking());
+        setSearchParams({});
     };
 
     return (

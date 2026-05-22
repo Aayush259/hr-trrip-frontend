@@ -1,6 +1,10 @@
 import { useState } from "react";
 import { FiLogOut, FiMail, FiMenu, FiUser, FiX } from "react-icons/fi";
+import { useSearchParams } from "react-router";
 import type { AuthUser } from "../../app/features/authSlice";
+import { useAppSelector } from "../../app/hooks/helperHooks";
+import useBookingHistory from "../../app/hooks/useBookingHistory";
+import BookingHistoryList from "./BookingHistoryList";
 
 type AppSidebarProps = {
     user: AuthUser;
@@ -8,6 +12,16 @@ type AppSidebarProps = {
 
 const AppSidebar = ({ user }: AppSidebarProps) => {
     const [isOpen, setIsOpen] = useState(false);
+    const [searchParams, setSearchParams] = useSearchParams();
+    const { bookings, error, isLoading } = useAppSelector((state) => state.bookingHistory);
+    const activeBookingId = searchParams.get("bookingId");
+
+    useBookingHistory();
+
+    const handleBookingSelect = (bookingId: string) => {
+        setSearchParams({ bookingId });
+        setIsOpen(false);
+    };
 
     return (
         <>
@@ -43,8 +57,16 @@ const AppSidebar = ({ user }: AppSidebarProps) => {
                     </div>
                 </section>
 
+                <BookingHistoryList
+                    activeBookingId={activeBookingId}
+                    bookings={bookings}
+                    error={error}
+                    isLoading={isLoading}
+                    onSelect={handleBookingSelect}
+                />
+
                 <button
-                    className="mt-auto flex h-11 w-full items-center justify-center gap-2 rounded-md border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sky-100"
+                    className="mt-5 flex h-11 w-full shrink-0 items-center justify-center gap-2 rounded-md border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sky-100"
                     type="button"
                 >
                     <FiLogOut aria-hidden="true" className="text-base" />

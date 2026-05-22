@@ -4,6 +4,7 @@ export type TravelBookingExtractionStatus = "pending" | "processing" | "complete
 export type CurrentTravelBookingStatus =
     | "empty"
     | "ready"
+    | "loading"
     | "uploading"
     | TravelBookingExtractionStatus;
 
@@ -70,6 +71,27 @@ const currentTravelBookingSlice = createSlice({
             state.message = "Sending travel document...";
             state.error = null;
         },
+        setCurrentBookingLoading: (state) => {
+            state.file = null;
+            state.status = "loading";
+            state.message = "Loading itinerary details...";
+            state.booking = null;
+            state.error = null;
+        },
+        setCurrentBookingFromHistory: (state, action: PayloadAction<TravelBooking>) => {
+            state.file = null;
+            state.status = action.payload.extractionStatus;
+            state.message = null;
+            state.booking = action.payload;
+            state.error = null;
+        },
+        setCurrentBookingDetailError: (state, action: PayloadAction<string>) => {
+            state.file = null;
+            state.status = "failed";
+            state.message = null;
+            state.booking = null;
+            state.error = action.payload;
+        },
         setTravelDocumentStatus: (state, action: PayloadAction<TravelDocumentStatusPayload>) => {
             state.status = action.payload.status;
             state.message = action.payload.message;
@@ -98,6 +120,9 @@ const currentTravelBookingSlice = createSlice({
 export const {
     markTravelDocumentSent,
     resetCurrentTravelBooking,
+    setCurrentBookingDetailError,
+    setCurrentBookingFromHistory,
+    setCurrentBookingLoading,
     setCurrentTravelFile,
     setTravelDocumentCompleted,
     setTravelDocumentError,
