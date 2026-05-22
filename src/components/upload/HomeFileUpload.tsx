@@ -1,23 +1,11 @@
 import { useId, useState, type ChangeEvent } from "react";
 import { FiUploadCloud } from "react-icons/fi";
-import {
-    markTravelDocumentSent,
-    setCurrentTravelFile,
-    setTravelDocumentError,
-} from "../../app/features/currentTravelBookingSlice";
-import { useAppDispatch } from "../../app/hooks/helperHooks";
-import socket from "../../app/socket";
-
-const MAX_FILE_SIZE = 2 * 1024 * 1024;
-
-const isSupportedFile = (file: File) => {
-    return file.type.startsWith("image/") || file.type === "application/pdf";
-};
+import useTravelDocumentUpload from "../../app/hooks/useTravelDocumentUpload";
 
 const HomeFileUpload = () => {
-    const dispatch = useAppDispatch();
     const inputId = useId();
     const [error, setError] = useState<string | null>(null);
+    const uploadTravelDocument = useTravelDocumentUpload();
 
     const handleChange = async (event: ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
@@ -27,41 +15,8 @@ const HomeFileUpload = () => {
             return;
         }
 
-        if (!isSupportedFile(file)) {
-            setError("Choose an image or PDF file.");
-            event.target.value = "";
-            return;
-        }
-
-        if (file.size > MAX_FILE_SIZE) {
-            setError("File size must be 2MB or less.");
-            event.target.value = "";
-            return;
-        }
-
-        setError(null);
-
-        try {
-            const fileBuffer = await file.arrayBuffer();
-            const currentFile = {
-                fileBuffer,
-                mimeType: file.type,
-                filename: file.name,
-                size: file.size,
-            };
-
-            dispatch(setCurrentTravelFile(currentFile));
-            dispatch(markTravelDocumentSent());
-            socket.emit("upload_travel_document", {
-                fileBuffer,
-                mimeType: file.type,
-                filename: file.name,
-            });
-        } catch {
-            dispatch(setTravelDocumentError("The file could not be prepared for upload."));
-        } finally {
-            event.target.value = "";
-        }
+        setError(await uploadTravelDocument(file));
+        event.target.value = "";
     };
 
     return (
