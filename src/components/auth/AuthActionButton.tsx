@@ -1,0 +1,19 @@
+import { FiArrowRight } from "react-icons/fi";
+
+type AuthActionButtonProps = {
+    children: string;
+};
+
+const AuthActionButton = ({ children }: AuthActionButtonProps) => {
+    return (
+        <button
+            className="flex h-12 w-full items-center justify-center gap-2 rounded-md bg-slate-950 px-4 text-sm font-semibold text-white transition hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sky-200"
+            type="button"
+        >
+            <span>{children}</span>
+            <FiArrowRight aria-hidden="true" className="text-base" />
+        </button>
+    );
+};
+
+export default AuthActionButton;
