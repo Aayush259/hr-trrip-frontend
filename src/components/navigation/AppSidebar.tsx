@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { FiLogOut, FiMail, FiMenu, FiUser, FiX } from "react-icons/fi";
 import { useSearchParams } from "react-router";
-import type { AuthUser } from "../../app/features/authSlice";
-import { useAppSelector } from "../../app/hooks/helperHooks";
+import api from "../../app/api";
+import { clearAuth, type AuthUser } from "../../app/features/authSlice";
+import { getApiErrorMessage } from "../../app/helpers";
+import { useAppDispatch, useAppSelector } from "../../app/hooks/helperHooks";
 import useBookingHistory from "../../app/hooks/useBookingHistory";
 import BookingHistoryList from "./BookingHistoryList";
 
@@ -11,7 +13,10 @@ type AppSidebarProps = {
 };
 
 const AppSidebar = ({ user }: AppSidebarProps) => {
+    const dispatch = useAppDispatch();
     const [isOpen, setIsOpen] = useState(true);
+    const [isLoggingOut, setIsLoggingOut] = useState(false);
+    const [logoutError, setLogoutError] = useState<string | null>(null);
     const [searchParams, setSearchParams] = useSearchParams();
     const { bookings, error, isLoading } = useAppSelector((state) => state.bookingHistory);
     const activeBookingId = searchParams.get("bookingId");
@@ -20,6 +25,20 @@ const AppSidebar = ({ user }: AppSidebarProps) => {
 
     const handleBookingSelect = (bookingId: string) => {
         setSearchParams({ bookingId });
+    };
+
+    const handleLogout = async () => {
+        setLogoutError(null);
+        setIsLoggingOut(true);
+
+        try {
+            await api.post("/api/users/logout");
+            dispatch(clearAuth());
+        } catch (error) {
+            setLogoutError(getApiErrorMessage(error, "Unable to log out. Please try again."));
+        } finally {
+            setIsLoggingOut(false);
+        }
     };
 
     return (
@@ -36,8 +55,9 @@ const AppSidebar = ({ user }: AppSidebarProps) => {
             </button>
 
             <aside
-                className={`fixed inset-y-0 left-0 z-30 flex w-[min(18rem,calc(100vw-1.25rem))] flex-col border-r border-slate-200 bg-white px-5 pb-5 pt-24 text-slate-950 shadow-[0_24px_70px_-42px_rgba(15,23,42,0.45)] transition-transform duration-200 ease-out ${isOpen ? "translate-x-0" : "-translate-x-full"
-                    }`}
+                className={`fixed inset-y-0 left-0 z-30 flex w-[min(18rem,calc(100vw-1.25rem))] flex-col border-r border-slate-200 bg-white px-5 pb-5 pt-24 text-slate-950 shadow-[0_24px_70px_-42px_rgba(15,23,42,0.45)] transition-transform duration-200 ease-out ${
+                    isOpen ? "translate-x-0" : "-translate-x-full"
+                }`}
                 id="app-sidebar"
             >
                 <section className="rounded-lg border border-slate-200 bg-slate-50 p-4">
@@ -64,12 +84,19 @@ const AppSidebar = ({ user }: AppSidebarProps) => {
                 />
 
                 <button
-                    className="mt-5 flex h-11 w-full shrink-0 items-center justify-center gap-2 rounded-md border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sky-100"
+                    className="mt-5 flex h-11 w-full shrink-0 items-center justify-center gap-2 rounded-md border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sky-100 disabled:cursor-not-allowed disabled:opacity-60"
+                    disabled={isLoggingOut}
+                    onClick={handleLogout}
                     type="button"
                 >
                     <FiLogOut aria-hidden="true" className="text-base" />
-                    <span>Logout</span>
+                    <span>{isLoggingOut ? "Logging out..." : "Logout"}</span>
                 </button>
+                {logoutError ? (
+                    <p className="mt-2 text-sm font-medium text-rose-600" role="alert">
+                        {logoutError}
+                    </p>
+                ) : null}
             </aside>
         </>
     );
