@@ -4,6 +4,7 @@ import api from "../app/api";
 import { clearAuth, setAuthUser, type AuthUser } from "../app/features/authSlice";
 import { useAppDispatch, useAppSelector } from "../app/hooks/helperHooks";
 import useAuthenticatedSocket from "../app/hooks/useAuthenticatedSocket";
+import useTravelBookingSocketEvents from "../app/hooks/useTravelBookingSocketEvents";
 
 type MeResponse = {
     data?: {
@@ -23,6 +24,7 @@ const RootLayout = () => {
         isLoggedIn,
         user,
     });
+    useTravelBookingSocketEvents();
 
     useEffect(() => {
         if (!shouldCheckSession || hasCheckedSession.current) {

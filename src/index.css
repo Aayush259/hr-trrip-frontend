@@ -1,1 +1,23 @@
 @import "tailwindcss";
+
+@keyframes booking-result-enter {
+    from {
+        opacity: 0;
+        transform: translateY(-14px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.booking-result-enter {
+    animation: booking-result-enter 420ms ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .booking-result-enter {
+        animation: none;
+    }
+}
