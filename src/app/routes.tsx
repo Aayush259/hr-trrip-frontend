@@ -4,6 +4,8 @@
  */
 
 import { createBrowserRouter } from "react-router";
+import ProtectedLayout from "../layout/ProtectedLayout";
+import PublicOnlyLayout from "../layout/PublicOnlyLayout";
 import RootLayout from "../layout/RootLayout";
 import HomePage from "../pages/HomePage";
 import LoginPage from "../pages/LoginPage";
@@ -15,16 +17,26 @@ export const router = createBrowserRouter([
         element: <RootLayout />,
         children: [
             {
-                index: true,
-                element: <HomePage />,
+                element: <ProtectedLayout />,
+                children: [
+                    {
+                        index: true,
+                        element: <HomePage />,
+                    },
+                ],
             },
             {
-                path: "login",
-                element: <LoginPage />,
-            },
-            {
-                path: "signup",
-                element: <SignupPage />,
+                element: <PublicOnlyLayout />,
+                children: [
+                    {
+                        path: "login",
+                        element: <LoginPage />,
+                    },
+                    {
+                        path: "signup",
+                        element: <SignupPage />,
+                    },
+                ],
             },
         ],
     },
