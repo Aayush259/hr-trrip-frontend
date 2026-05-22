@@ -1,33 +1,120 @@
 /**
  * @module api
  * @description Configures and exports a global Axios instance for API communication.
- * Includes interceptors for request customization and global response error handling.
+ * Includes interceptors for access-token handling and global response errors.
  */
 
 import axios from "axios";
+import type { AxiosError, InternalAxiosRequestConfig } from "axios";
+import { clearAuth, setAuthCredentials, updateAccessToken, type AuthUser } from "./features/authSlice";
+import { store } from "./store";
 
-/**
- * Axios instance configured with base URL and essential credentials.
- * @constant api
- */
-const api = axios.create({
-    baseURL: import.meta.env.VITE_API_URL,
-    withCredentials: true, // Essential for better-auth to send/receive session cookies
-    headers: {
-        "Content-Type": "application/json",
-        "Accept": "application/json",
-    },
-});
+const REFRESH_TOKEN_PATH = "/api/users/refresh-token";
 
-/**
- * Request Interceptor
- * @description Intercepts outgoing requests to modify configuration if needed
- * (e.g., adding dynamic headers or logging).
- */
+type RetryableRequestConfig = InternalAxiosRequestConfig & {
+    _retry?: boolean;
+};
+
+type AuthResponsePayload = {
+    data?: {
+        accessToken?: unknown;
+        user?: unknown;
+    };
+};
+
+const createApiClient = () => {
+    return axios.create({
+        baseURL: import.meta.env.VITE_API_URL,
+        withCredentials: true,
+        headers: {
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+        },
+    });
+};
+
+const api = createApiClient();
+const refreshApi = createApiClient();
+
+const isAuthUser = (value: unknown): value is AuthUser => {
+    if (!value || typeof value !== "object") {
+        return false;
+    }
+
+    const user = value as Record<string, unknown>;
+
+    return (
+        typeof user._id === "string" &&
+        typeof user.name === "string" &&
+        typeof user.email === "string"
+    );
+};
+
+const getAuthResponseData = (payload: unknown) => {
+    return (payload as AuthResponsePayload).data;
+};
+
+const syncAuthResponse = (payload: unknown) => {
+    const authData = getAuthResponseData(payload);
+    const accessToken = authData?.accessToken;
+
+    if (typeof accessToken !== "string") {
+        return null;
+    }
+
+    if (isAuthUser(authData?.user)) {
+        store.dispatch(
+            setAuthCredentials({
+                accessToken,
+                user: authData.user,
+            })
+        );
+    } else {
+        store.dispatch(updateAccessToken(accessToken));
+    }
+
+    return accessToken;
+};
+
+const isRefreshTokenRequest = (config?: InternalAxiosRequestConfig) => {
+    return Boolean(config?.url?.includes(REFRESH_TOKEN_PATH));
+};
+
+const getAccessToken = () => {
+    return store.getState().auth.accessToken;
+};
+
+let refreshAccessTokenRequest: Promise<string> | null = null;
+
+const refreshAccessToken = () => {
+    if (!refreshAccessTokenRequest) {
+        refreshAccessTokenRequest = refreshApi
+            .post<AuthResponsePayload>(REFRESH_TOKEN_PATH)
+            .then((response) => {
+                const nextAccessToken = syncAuthResponse(response.data);
+
+                if (!nextAccessToken) {
+                    throw new Error("Refresh response did not include an access token.");
+                }
+
+                return nextAccessToken;
+            })
+            .finally(() => {
+                refreshAccessTokenRequest = null;
+            });
+    }
+
+    return refreshAccessTokenRequest;
+};
+
 api.interceptors.request.use(
     (config) => {
-        // Modify config before request is sent if needed
-        // e.g., attach dynamic headers
+        const accessToken = getAccessToken();
+
+        if (accessToken) {
+            config.headers.Authorization = `Bearer ${accessToken}`;
+        }
+
         return config;
     },
     (error) => {
@@ -35,40 +122,47 @@ api.interceptors.request.use(
     }
 );
 
-/**
- * Response Interceptor
- * @description Intercepts incoming responses for global error handling and data extraction.
- * Handles common HTTP status codes like 401 (Unauthorized), 403 (Forbidden), and 500+ (Server Errors).
- */
 api.interceptors.response.use(
     (response) => {
-        // Any status code that lie within the range of 2xx cause this function to trigger
+        syncAuthResponse(response.data);
         return response;
     },
-    (error) => {
-        // Any status codes that falls outside the range of 2xx cause this function to trigger
-        if (error.response) {
-            // Server responded with a status other than 200 range
-            const status = error.response.status;
-            const data = error.response.data;
+    async (error: AxiosError) => {
+        const status = error.response?.status;
+        const originalRequest = error.config as RetryableRequestConfig | undefined;
 
-            // Handle specific status codes
+        if (
+            status === 401 &&
+            originalRequest &&
+            !originalRequest._retry &&
+            !isRefreshTokenRequest(originalRequest)
+        ) {
+            originalRequest._retry = true;
+
+            try {
+                await refreshAccessToken();
+                return api(originalRequest);
+            } catch (refreshError) {
+                store.dispatch(clearAuth());
+                return Promise.reject(refreshError);
+            }
+        }
+
+        if (error.response) {
+            const data = error.response.data as { message?: string } | undefined;
+
             if (status === 401) {
                 console.warn("Unauthorized access. Session may have expired.");
-                // Optionally redirect to login or trigger a global log-out event
-                window.location.reload();
             } else if (status === 403) {
                 console.warn("Forbidden. You do not have permission to perform this action.");
-            } else if (status >= 500) {
+            } else if (status && status >= 500) {
                 console.error("Server error occurred:", data?.message || error.message);
             } else {
                 console.error(`API Error [${status}]:`, data?.message || error.message);
             }
         } else if (error.request) {
-            // Request was made but no response was received (e.g., network error or CORS)
             console.error("Network error or no response received from server:", error.message);
         } else {
-            // Something else happened while setting up the request
             console.error("Error in request setup:", error.message);
         }
 
