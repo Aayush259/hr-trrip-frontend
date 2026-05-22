@@ -11,7 +11,7 @@ type AppSidebarProps = {
 };
 
 const AppSidebar = ({ user }: AppSidebarProps) => {
-    const [isOpen, setIsOpen] = useState(false);
+    const [isOpen, setIsOpen] = useState(true);
     const [searchParams, setSearchParams] = useSearchParams();
     const { bookings, error, isLoading } = useAppSelector((state) => state.bookingHistory);
     const activeBookingId = searchParams.get("bookingId");
@@ -20,7 +20,6 @@ const AppSidebar = ({ user }: AppSidebarProps) => {
 
     const handleBookingSelect = (bookingId: string) => {
         setSearchParams({ bookingId });
-        setIsOpen(false);
     };
 
     return (
@@ -37,9 +36,8 @@ const AppSidebar = ({ user }: AppSidebarProps) => {
             </button>
 
             <aside
-                className={`fixed inset-y-0 left-0 z-30 flex w-[min(18rem,calc(100vw-1.25rem))] flex-col border-r border-slate-200 bg-white px-5 pb-5 pt-24 text-slate-950 shadow-[0_24px_70px_-42px_rgba(15,23,42,0.45)] transition-transform duration-200 ease-out ${
-                    isOpen ? "translate-x-0" : "-translate-x-full"
-                }`}
+                className={`fixed inset-y-0 left-0 z-30 flex w-[min(18rem,calc(100vw-1.25rem))] flex-col border-r border-slate-200 bg-white px-5 pb-5 pt-24 text-slate-950 shadow-[0_24px_70px_-42px_rgba(15,23,42,0.45)] transition-transform duration-200 ease-out ${isOpen ? "translate-x-0" : "-translate-x-full"
+                    }`}
                 id="app-sidebar"
             >
                 <section className="rounded-lg border border-slate-200 bg-slate-50 p-4">
