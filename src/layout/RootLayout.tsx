@@ -3,6 +3,7 @@ import { Outlet } from "react-router";
 import api from "../app/api";
 import { clearAuth, setAuthUser, type AuthUser } from "../app/features/authSlice";
 import { useAppDispatch, useAppSelector } from "../app/hooks/helperHooks";
+import useAuthenticatedSocket from "../app/hooks/useAuthenticatedSocket";
 
 type MeResponse = {
     data?: {
@@ -16,6 +17,12 @@ const RootLayout = () => {
     const shouldCheckSession = Boolean(accessToken && isLoggedIn && user);
     const hasCheckedSession = useRef(false);
     const [isSessionReady, setIsSessionReady] = useState(!shouldCheckSession);
+
+    useAuthenticatedSocket({
+        accessToken,
+        isLoggedIn,
+        user,
+    });
 
     useEffect(() => {
         if (!shouldCheckSession || hasCheckedSession.current) {
