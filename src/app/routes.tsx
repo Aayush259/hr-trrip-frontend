@@ -9,6 +9,7 @@ import PublicOnlyLayout from "../layout/PublicOnlyLayout";
 import RootLayout from "../layout/RootLayout";
 import HomePage from "../pages/HomePage";
 import LoginPage from "../pages/LoginPage";
+import SharedItineraryPage from "../pages/SharedItineraryPage";
 import SignupPage from "../pages/SignupPage";
 
 export const router = createBrowserRouter([
@@ -16,6 +17,10 @@ export const router = createBrowserRouter([
         path: "/",
         element: <RootLayout />,
         children: [
+            {
+                path: "share/:bookingId",
+                element: <SharedItineraryPage />,
+            },
             {
                 element: <ProtectedLayout />,
                 children: [

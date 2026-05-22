@@ -1,67 +1,11 @@
-import type { ReactNode } from "react";
 import { FiCheckCircle, FiExternalLink } from "react-icons/fi";
 import type { TravelBooking } from "../../app/features/currentTravelBookingSlice";
+import TravelBookingDetails from "./TravelBookingDetails";
+import TravelBookingShare from "./TravelBookingShare";
 
 type TravelBookingResultProps = {
     booking: TravelBooking;
     onUploadAnother: () => void;
-};
-
-const formatLabel = (label: string) => {
-    return label
-        .replace(/([a-z])([A-Z])/g, "$1 $2")
-        .replace(/[_-]+/g, " ")
-        .replace(/^./, (character) => character.toUpperCase());
-};
-
-const renderDataValue = (value: unknown, keyPath: string): ReactNode => {
-    if (value === null || value === undefined || value === "") {
-        return <span className="text-slate-400">Not provided</span>;
-    }
-
-    if (Array.isArray(value)) {
-        if (!value.length) {
-            return <span className="text-slate-400">No items</span>;
-        }
-
-        return (
-            <div className="space-y-2">
-                {value.map((item, index) => (
-                    <div
-                        className="rounded-md border border-slate-200 bg-slate-50 px-3 py-3"
-                        key={`${keyPath}-${index}`}
-                    >
-                        {renderDataValue(item, `${keyPath}-${index}`)}
-                    </div>
-                ))}
-            </div>
-        );
-    }
-
-    if (typeof value === "object") {
-        const entries = Object.entries(value as Record<string, unknown>);
-
-        if (!entries.length) {
-            return <span className="text-slate-400">No details</span>;
-        }
-
-        return (
-            <dl className="space-y-3">
-                {entries.map(([entryLabel, entryValue]) => (
-                    <div className="rounded-md border border-slate-200 bg-white px-3 py-3" key={entryLabel}>
-                        <dt className="text-xs font-semibold uppercase tracking-[0] text-slate-500">
-                            {formatLabel(entryLabel)}
-                        </dt>
-                        <dd className="mt-2 text-sm leading-6 text-slate-800">
-                            {renderDataValue(entryValue, `${keyPath}-${entryLabel}`)}
-                        </dd>
-                    </div>
-                ))}
-            </dl>
-        );
-    }
-
-    return <span className="break-words">{String(value)}</span>;
 };
 
 const TravelBookingResult = ({ booking, onUploadAnother }: TravelBookingResultProps) => {
@@ -81,17 +25,22 @@ const TravelBookingResult = ({ booking, onUploadAnother }: TravelBookingResultPr
                         </p>
                     </div>
                 </div>
-                <button
-                    className="h-9 rounded-md border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sky-100"
-                    onClick={onUploadAnother}
-                    type="button"
-                >
-                    Upload more
-                </button>
+                <div className="flex flex-col items-stretch gap-2 sm:items-end">
+                    <div className="flex flex-col gap-2 sm:flex-row">
+                        <TravelBookingShare bookingId={booking._id} />
+                        <button
+                            className="h-9 rounded-md border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sky-100"
+                            onClick={onUploadAnother}
+                            type="button"
+                        >
+                            Upload more
+                        </button>
+                    </div>
+                </div>
             </header>
 
-            <div className="mt-5 rounded-lg bg-slate-50 p-3 sm:p-4">
-                {renderDataValue(booking.extractedData, "booking")}
+            <div className="mt-5">
+                <TravelBookingDetails data={booking.extractedData} />
             </div>
 
             <a
