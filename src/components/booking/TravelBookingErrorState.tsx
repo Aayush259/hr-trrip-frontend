@@ -1,12 +1,12 @@
 import { FiAlertCircle } from "react-icons/fi";
 
 type TravelBookingErrorStateProps = {
-    message: string;
+    onRetry?: () => void;
     onUploadAnother: () => void;
 };
 
 const TravelBookingErrorState = ({
-    message,
+    onRetry,
     onUploadAnother,
 }: TravelBookingErrorStateProps) => {
     return (
@@ -15,16 +15,29 @@ const TravelBookingErrorState = ({
                 <FiAlertCircle aria-hidden="true" />
             </span>
             <h1 className="mt-5 text-base font-semibold tracking-[0] text-slate-950">
-                Document rejected
+                AI servers are busy
             </h1>
-            <p className="mt-2 text-sm leading-6 text-rose-700">{message}</p>
-            <button
-                className="mt-6 h-10 rounded-md bg-slate-950 px-4 text-sm font-semibold text-white transition hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sky-100"
-                onClick={onUploadAnother}
-                type="button"
-            >
-                Upload another
-            </button>
+            <p className="mt-2 text-sm leading-6 text-rose-700">
+                Itinerary generation is under temporary high demand. Try again in a moment.
+            </p>
+            <div className="mt-6 flex flex-col justify-center gap-2 sm:flex-row">
+                {onRetry ? (
+                    <button
+                        className="h-10 rounded-md bg-slate-950 px-4 text-sm font-semibold text-white transition hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sky-100"
+                        onClick={onRetry}
+                        type="button"
+                    >
+                        Retry
+                    </button>
+                ) : null}
+                <button
+                    className="h-10 rounded-md border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sky-100"
+                    onClick={onUploadAnother}
+                    type="button"
+                >
+                    Upload another
+                </button>
+            </div>
         </section>
     );
 };

@@ -71,6 +71,11 @@ const currentTravelBookingSlice = createSlice({
             state.message = "Sending travel document...";
             state.error = null;
         },
+        markTravelBookingRetrying: (state) => {
+            state.status = "loading";
+            state.message = "Retrying itinerary generation...";
+            state.error = null;
+        },
         setCurrentBookingLoading: (state) => {
             state.file = null;
             state.status = "loading";
@@ -118,6 +123,7 @@ const currentTravelBookingSlice = createSlice({
 });
 
 export const {
+    markTravelBookingRetrying,
     markTravelDocumentSent,
     resetCurrentTravelBooking,
     setCurrentBookingDetailError,

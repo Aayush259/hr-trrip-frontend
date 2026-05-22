@@ -1,6 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "react-router";
-import { resetCurrentTravelBooking } from "../app/features/currentTravelBookingSlice";
+import api from "../app/api";
+import {
+    markTravelBookingRetrying,
+    resetCurrentTravelBooking,
+    setTravelDocumentError,
+} from "../app/features/currentTravelBookingSlice";
+import { getApiErrorMessage } from "../app/helpers";
 import useBookingDetailsFromRoute from "../app/hooks/useBookingDetailsFromRoute";
 import { useAppDispatch, useAppSelector } from "../app/hooks/helperHooks";
 import useTravelDocumentUpload from "../app/hooks/useTravelDocumentUpload";
@@ -19,7 +25,7 @@ const HomePage = () => {
     const dispatch = useAppDispatch();
     const [, setSearchParams] = useSearchParams();
     const user = useAppSelector((state) => state.auth.user);
-    const { booking, error, message, status } = useAppSelector(
+    const { booking, message, status } = useAppSelector(
         (state) => state.currentTravelBooking
     );
     const dragDepth = useRef(0);
@@ -112,6 +118,24 @@ const HomePage = () => {
         setDropError(null);
     };
 
+    const handleRetry = async () => {
+        if (!booking?._id) {
+            return;
+        }
+
+        dispatch(markTravelBookingRetrying());
+
+        try {
+            await api.post(`/api/bookings/retry/${booking._id}`);
+        } catch (retryError) {
+            dispatch(
+                setTravelDocumentError(
+                    getApiErrorMessage(retryError, "Unable to retry itinerary generation.")
+                )
+            );
+        }
+    };
+
     return (
         <>
             {user ? <AppSidebar user={user} /> : null}
@@ -124,7 +148,7 @@ const HomePage = () => {
                 ) : null}
                 {status === "failed" ? (
                     <TravelBookingErrorState
-                        message={error || "The document could not be processed."}
+                        onRetry={booking?._id ? handleRetry : undefined}
                         onUploadAnother={handleUploadAnother}
                     />
                 ) : null}

@@ -7,7 +7,7 @@ import {
     type TravelDocumentStatusPayload,
 } from "../features/currentTravelBookingSlice";
 import { upsertBookingHistoryItem } from "../features/bookingHistorySlice";
-import { useAppDispatch } from "./helperHooks";
+import { useAppDispatch, useAppSelector } from "./helperHooks";
 import socket from "../socket";
 
 type TravelDocumentErrorPayload = {
@@ -16,6 +16,7 @@ type TravelDocumentErrorPayload = {
 
 const useTravelBookingSocketEvents = () => {
     const dispatch = useAppDispatch();
+    const activeBookingId = useAppSelector((state) => state.currentTravelBooking.booking?._id);
 
     useEffect(() => {
         const handleStatus = (payload: TravelDocumentStatusPayload) => {
@@ -26,7 +27,6 @@ const useTravelBookingSocketEvents = () => {
             const { _id, createdAt, documentUrl, extractionStatus, updatedAt, userId } =
                 payload.data.booking;
 
-            dispatch(setTravelDocumentCompleted(payload));
             dispatch(
                 upsertBookingHistoryItem({
                     _id,
@@ -37,6 +37,10 @@ const useTravelBookingSocketEvents = () => {
                     updatedAt,
                 })
             );
+
+            if (!activeBookingId || activeBookingId === _id) {
+                dispatch(setTravelDocumentCompleted(payload));
+            }
         };
 
         const handleError = (payload: TravelDocumentErrorPayload) => {
@@ -52,7 +56,7 @@ const useTravelBookingSocketEvents = () => {
             socket.off("travel_document_completed", handleCompleted);
             socket.off("travel_document_error", handleError);
         };
-    }, [dispatch]);
+    }, [activeBookingId, dispatch]);
 };
 
 export default useTravelBookingSocketEvents;
